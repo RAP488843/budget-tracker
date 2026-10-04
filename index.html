@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatat Keuangan Sederhana</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #2c3e50; }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .card {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            margin: 0 5px;
+        }
+        .balance { background-color: #3498db; }
+        .income { background-color: #2ecc71; }
+        .expense { background-color: #e74c3c; }
+        form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #34495e; }
+        ul { list-style: none; padding: 0; }
+        li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 5px;
+        }
+        li.pemasukan { border-left: 5px solid #2ecc71; }
+        li.pengeluaran { border-left: 5px solid #e74c3c; }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Budget Tracker</h2>
+    
+    <!-- Ringkasan Saldo -->
+    <div class="summary">
+        <div class="card balance">
+            <h4>Total Saldo</h4>
+            <p id="total-saldo">Rp 0</p>
+        </div>
+        <div class="card income">
+            <h4>Pemasukan</h4>
+            <p id="total-pemasukan">Rp 0</p>
+        </div>
+        <div class="card expense">
+            <h4>Pengeluaran</h4>
+            <p id="total-pengeluaran">Rp 0</p>
+        </div>
+    </div>
+
+    <!-- Form Input Transaksi -->
+    <form id="transaksi-form">
+        <input type="text" id="keterangan" placeholder="Keterangan (misal: Uang Saku)" required>
+        <input type="number" id="nominal" placeholder="Nominal (angka saja)" required>
+        <select id="tipe">
+            <option value="pemasukan">Pemasukan</option>
+            <option value="pengeluaran">Pengeluaran</option>
+        </select>
+        <button type="submit">Tambah Transaksi</button>
+    </form>
+
+    <!-- Daftar Transaksi -->
+    <h3>Riwayat Transaksi</h3>
+    <ul id="daftar-transaksi"></ul>
+</div>
+
+<script>
+    // Mengambil data dari localStorage atau buat array kosong
+    let transaksiList = JSON.parse(localStorage.getItem("transaksi")) || [];
+
+    const form = document.getElementById("transaksi-form");
+    const keteranganInput = document.getElementById("keterangan");
+    const nominalInput = document.getElementById("nominal");
+    const tipeInput = document.getElementById("tipe");
+    const daftarTransaksi = document.getElementById("daftar-transaksi");
+    const totalSaldoEl = document.getElementById("total-saldo");
+    const totalPemasukanEl = document.getElementById("total-pemasukan");
+    const totalPengeluaranEl = document.getElementById("total-pengeluaran");
+
+    function formatRupiah(angka) {
+        return "Rp " + Number(angka).toLocaleString("id-ID");
+    }
+
+    function updateUI() {
+        daftarTransaksi.innerHTML = "";
+        let pemasukan = 0;
+        let pengeluaran = 0;
+
+        transaksiList.forEach((item, index) => {
+            const li = document.createElement("li");
+            li.classList.add(item.tipe);
+            li.innerHTML = `
+                <span>${item.keterangan} (${formatRupiah(item.nominal)})</span>
+                <button class="delete-btn" onclick="hapusTransaksi(${index})">X</button>
+            `;
+            daftarTransaksi.appendChild(li);
+
+            if (item.tipe === "pemasukan") {
+                pemasukan += Number(item.nominal);
+            } else {
+                pengeluaran += Number(item.nominal);
+            }
+        });
+
+        let saldo = pemasukan - pengeluaran;
+        totalSaldoEl.textContent = formatRupiah(saldo);
+        totalPemasukanEl.textContent = formatRupiah(pemasukan);
+        totalPengeluaranEl.textContent = formatRupiah(pengeluaran);
+
+        // Simpan ke LocalStorage menggunakan JSON.stringify
+        localStorage.setItem("transaksi", JSON.stringify(transaksiList));
+    }
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        
+        // Membuat Object baru dari input user
+        const transaksiBaru = {
+            keterangan: keteranganInput.value,
+            nominal: nominalInput.value,
+            tipe: tipeInput.value
+        };
+
+        transaksiList.push(transaksiBaru);
+        updateUI();
+        form.reset();
+    });
+
+    function hapusTransaksi(index) {
+        transaksiList.splice(index, 1);
+        updateUI();
+    }
+
+    // Jalankan saat pertama kali dimuat
+    updateUI();
+</script>
+
+</body>
+</html>
